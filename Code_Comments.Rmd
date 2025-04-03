@@ -221,7 +221,7 @@ data_talent <- data_talent %>%
                         ifelse(PerfScore != 4 & talent > Q3, "Promising Employees",
                         ifelse(PerfScore == 4 & talent <= Q3, "Good Executors", "Others"))))
 
-# Count how many workers in each category
+# How many workers in each category
 category_counts <- data_talent %>%
   group_by(Tal_category) %>%
   summarise(count = n())
@@ -233,18 +233,15 @@ Here we can see how departments differ for who they consider talented (by defini
 # Filter data to include only talented individuals
 talented_data <- data_talent %>% filter(Tal_category %in% c(2, 3))
 
-# Create 3D scatter plot
+# 3D scatter plot
 fig <- plot_ly(talented_data, x = ~competence, y = ~commitment, z = ~contribution,
                color = ~Department, colors = c('#636EFA', '#EF553B', '#00CC96', '#AB63FA'),
                type = 'scatter3d', mode = 'markers')
-
-# Customize the layout
 fig <- fig %>% layout(title = '3D Scatter Plot of Talented Individuals',
                       scene = list(xaxis = list(title = 'Competence'),
                                    yaxis = list(title = 'Commitment'),
                                    zaxis = list(title = 'Contribution')))
 
-# Display the plot
 fig
 
 ```
@@ -268,8 +265,6 @@ ggplot(filtered_data, aes(x = Exp_category, fill = as.factor(Tal_category))) +
 ```
 
 
-
-# Definition of relevant data
 ```{r}
 data_turnover <- data %>%
   dplyr::select(c(Zip, Salary, Termd, TermReason, DateofHire, DateofTermination, EmploymentStatus, Department, ManPos, Position, PositionID, MaritalDesc, RaceDesc, Experience, Exp_category, Age, Age_category))
@@ -298,10 +293,9 @@ irrelevant <-  c("return to school", "Learned that he is a gangster", "retiring"
 Starting from 2014, workers started to leave the company. Before 2016 the percentage of active workforce who were terminated was below 2.5%. Ongoing recruitment helped to cover loss of the employees and ABS Tech was witnessing the rise in their workforce. 
 However starting from 2017, ABS Tech stopped hiring new individuals. The percentage of employees leaving the company began to fluctuate around 5%, sometimes reaching a record 10%. In a span of 6 years, the company has lost 32.2% percent of its employees. It's worth noticing, that most of those termination were caused by the issues within the company and could have been prevented.  
 ```{r}
-# Define the range of years
-years <- 2014:2022
 
 # Create a data frame with the count of workers for each year
+years <- 2014:2022
 worker_counts <- data.frame(Year = years) %>%
   rowwise() %>%
   mutate(ActiveWorkers = sum(
@@ -310,7 +304,7 @@ worker_counts <- data.frame(Year = years) %>%
      as.Date(data_turnover$DateofTermination) > as.Date(paste0(Year, "-12-31")))
   ))
 
-# Create plot
+# Plot
 ggplot(worker_counts, aes(x = Year, y = ActiveWorkers)) +
   geom_line(color = "darkred", size = 1) +
   labs(
@@ -333,11 +327,8 @@ termination_counts <- data_turnover %>%
     IrrelevantTerminations = sum(TermReason %in% irrelevant, na.rm = TRUE)
   )
 
-# Convert Year in worker_counts to character
 worker_counts <- worker_counts %>%
   mutate(Year = as.character(Year))
-
-# Combine active workers and termination data
 combined_data <- worker_counts %>%
   left_join(termination_counts, by = c("Year" = "Year")) %>%
   mutate(
@@ -351,7 +342,7 @@ combined_data <- combined_data %>%
   group_by(Year) %>%
   mutate(TotalPercentage = sum(Percentage))
 
-# Create histogram
+# Histogram
 ggplot(combined_data, aes(x = Year, y = Percentage, fill = Category)) +
   geom_bar(stat = "identity") +
   scale_fill_manual(values = c("RelevantPercentage" = "tomato3",
@@ -371,17 +362,16 @@ Now, observing the relevant terminations in each department. Department rising t
 Terminations in other departments might be overlooked: the slight increase in the number of those employees quieting the job occurred in 2017-2019. Most of them happened in 2019, anomaly for the company year regarding terminations where all of the departments seemed to lost some of their workers. Neither of them has reoccurred in the past 3 years to raise concerns. 
 ```{r}
 
-# Filter data for terminated employees and add Year column based on DateofTermination
+# Filter data 
 terminated_data <- data_turnover %>%
   filter(Termd == TRUE, TermReason %in% relevant) %>%
   mutate(Year = format(as.Date(DateofTermination), "%Y"))
 
-# Calculate counts of terminations for relevant reasons by year and department
 relevant_data <- terminated_data %>%
   group_by(Year, Department) %>%
   summarise(Terminations = n(), .groups = "drop")
 
-# Create the line plot with separate lines for each department
+# Plot
 ggplot(relevant_data, aes(x = Year, y = Terminations, color = Department, group = Department)) +
   geom_line(size = 1) +
   geom_point(size = 2) +
@@ -402,7 +392,8 @@ ggplot(relevant_data, aes(x = Year, y = Terminations, color = Department, group 
 ```
 # Reasons of termination
 We have analyzed the reason of workers' termination. We recognize the fact that company's workforce management, retention strategies and working conditions might have changed over the years, leading to shifts in the reasons employees choose to leave. 
-Problem of insufficient financial compensation start to resonate within employees much more sharply. An increasingly significant proportion of workers found themselves in other companies. Unhappiness, hours and attendance seem to be the annual reason of employees' lose for the last 7 years - none of the company's retention strategies seem to work. Over the time, people considerably less started to change to leave the company to change their career entirely, the performance termination reason that appeared in the last 4 years, suggest that some employees instead of finding something more fitting for their capabilities, try to keep up with the work before being terminated by cause. 
+Problem of insufficient financial compensation start to resonate within employees much more sharply. An increasingly significant proportion of workers found themselves in other companies. Unhappiness, hours and attendance seem to be the annual reason of employees' lose for the last 7 years - none of the company's retention strategies seem to work. Over the time, people considerably less started to change to leave the company to change their career entirely, the performance termination reason that appeared in the last 4 years, suggest that some employees instead of finding something more fitting for their capabilities, try to keep up with the work before being terminated by cause.
+
 ```{r}
 # Filter data for relevant reasons and calculate percentages
 relevant_data <- data_turnover %>%
@@ -414,7 +405,7 @@ relevant_data <- data_turnover %>%
   mutate(Percentage = (Count / ActiveWorkers) * 100)
 
 
-
+# Plot
 ggplot(relevant_data, aes(x = Year, y = Percentage, group = TermReason, color = TermReason)) +
   geom_line(size = 1) +  # Original line for actual data points
   geom_smooth(method = "lm", se = FALSE, linetype = "dashed", size = 0.8) +  # Add trend line (linear model)
@@ -443,7 +434,7 @@ Beforehand, we need to identify those areas within ABS Tech using factor analysi
 ROC and AUC models suggests that those factors can quite accurately predict whatever the worker will be terminated or not. 
 
 ```{r}
-# Select numeric columns for factor analysis
+# Filter and standardize data
 relevant_un <- c(relevant, "N/A-StillEmployed")
 
 filtered_data <- data %>%
@@ -458,13 +449,11 @@ numeric_data <- filtered_data[, c("Salary", "EngagementSurvey", "EmpSatisfaction
                                   "ProjSelf", "ProjLead", "TeamIden", "OrgIden", 
                                   "CarOpp", "PsySafe", "Feedback", "Trust", "Network")] 
 
-# Check for missing values
 numeric_data <- na.omit(numeric_data)  # Remove rows with missing values
 
-# Standardize the data (scale features to have mean = 0 and standard deviation = 1)
 scaled_data <- scale(numeric_data)
 
-# Compute eigenvalues
+# Eigenvalues
 library(psych)
 cor_matrix <- cor(scaled_data)
 eigenvalues <- eigen(cor_matrix)$values
@@ -473,47 +462,20 @@ eigenvalues <- eigen(cor_matrix)$values
 plot(eigenvalues, type = "b", main = "Scree Plot", xlab = "Factor Number", ylab = "Eigenvalue")
 abline(h = 1, col = "red", lty = 2)
 
-# Perform factor analysis (example with 3 factors)
+# Factor analysis 
 factor_model <- fa(scaled_data, nfactors = 3, rotate = "varimax")
-
-# View factor loadings
 print(factor_model$loadings)
-
-# Compute factor scores
 factor_scores <- factor_model$scores
 data_turnover <- cbind(data_turnover, factor_scores)
 
-# Rename MR1, MR2, and MR3 in the data_turnover dataset
 colnames(data_turnover)[colnames(data_turnover) %in% c("MR1", "MR2", "MR3")] <- c("Engagement", "Career_Growth", "Financial_Compensation")
-
-# View factor scores
 head(data_turnover)
 
-# Logistic regression with renamed factor scores
+# Logistic regression 
 logistic_model <- glm(Termd ~ Engagement + Career_Growth + Financial_Compensation, 
                       data = data_turnover, family = binomial)
-
-# Summary of the model
 summary(logistic_model)
-
-# Predicted probabilities
 predicted_probs <- predict(logistic_model, newdata = data_turnover, type = "response")
-
-
-# Confusion Matrix to check accuracy
-# library(caret)
-# predicted_classes <- ifelse(predicted_probs > 0.5, TRUE, FALSE)
-# confusionMatrix(as.factor(predicted_classes), as.factor(data_turnover$Termd))
-# 
-# data_turnover$Termd <- ifelse(data_turnover$Termd == "TRUE" | data_turnover$Termd == 1, 1, 0)
-# data_turnover$Termd <- as.factor(data_turnover$Termd)
-# str(data_turnover$Termd)
-# 
-# # Compute ROC and AUC for model
-# library(pROC)
-# roc_curve <- roc(data_turnover$Termd, predicted_probs)
-# auc(roc_curve)  # Area under the curve
-# plot(roc_curve, main = "ROC Curve")
 
 
 ```
@@ -524,62 +486,36 @@ In search of career growth (MR2) people might start to feel dissatisfied with th
 People, who are interested more in a financial aspect (MR3), might actively send their resume to the other companies in search of a better payment if their place can't provide them a reasonable one. But the higher their payment is, the more likely they will stay loyal.
 
 Overall, financial incentive seem to hold the least importance in decision to leave a company, people are much more likely to overlook it if two other aspects (Career Growth and Engagement) of their work experience are satisfied.
+
 ```{r}
 set.seed(12)
-# Check the structure of the dataset
 str(data_turnover)
-
-# Ensure TermReason is a factor
 data_turnover$TermReason <- as.factor(data_turnover$TermReason)
-
-# Subset relevant columns
 data_SHAP <- data_turnover[, c("TermReason", "Engagement", "Career_Growth", "Financial_Compensation")] 
 
-
-# Install and load necessary packages
 library(randomForest)
+library(iml)
 
-# Remove empty levels from TermReason
 data_SHAP$TermReason <- droplevels(data_SHAP$TermReason)
-
-# Verify the updated levels
 levels(data_SHAP$TermReason)
-
-
 table(data_SHAP$TermReason)
 
-# Train a Random Forest model to predict TermReason
+# Train Random Forest modeL
 rf_model <- randomForest(TermReason ~ Engagement + Career_Growth + Financial_Compensation,
                          data = data_SHAP, 
                          ntree = 500, 
                          mtry = 3, 
                          importance = TRUE)
 
-# View the model summary
 print(rf_model)
 
-# Install and load the iml package
-library(iml)
-
-# Create a predictor object for the Random Forest model
+# SHAP
 predictor <- Predictor$new(rf_model, data = data_SHAP[, -1], y = data_SHAP$TermReason)
-
-# Compute SHAP values for a single observation
 shapley <- Shapley$new(predictor, x.interest = data_SHAP[1, -1])
-
-# Visualize the SHAP values for this observation
 shapley$plot()
-
-# Feature importance based on SHAP values
 feature_imp <- FeatureImp$new(predictor, loss = "ce")  # "ce" = Cross-entropy loss
 plot(feature_imp)
-
-# Filter for a specific TermReason (e.g., "performance issue")
 subset_data <- data_SHAP[data_SHAP$TermReason == "performance issue", ]
-
-
-
-# Compute SHAP values for this subset
 shapley_values <- list()
 
 set.seed(13)
@@ -598,11 +534,9 @@ for (i in 1:nrow(data_turnover)) {
   }
 }
 
-# Combine all SHAP values into a data frame
 shap_combined <- do.call(rbind, shapley_values)
 
-library(ggplot2)
-
+# Plot
 ggplot(feature_imp$results, aes(x = reorder(feature, importance), y = importance)) +
   geom_bar(stat = "identity") +
   coord_flip() +
@@ -623,11 +557,11 @@ Category 1 workers (top performers) were leaving a company because they were loo
 Category 2 workers (perspective) were leaving a company mostly because they were unhappy, found a better salary or found other company to work with. SHAP, however, show us the difference between tallented workers from category 1 and 2. Unlike top performers (1), perspective workers (2) care about money considerably less but were rather interested in career growth and movement up career ladder. Better salary just happen to usually correspond higher positions or work with more responsibilities.
 
 ```{r}
-# Filter data for talented workers (Tal_category != 0) who left
+# Filter data 
 talented_terminations <- data_turnover %>%
   filter(Termd == TRUE, Tal_category != 0, TermReason %in% relevant)
 
-# First Pie Chart: Amount of talented workers who left in each department
+#Pie Charts
 department_counts <- talented_terminations %>%
   group_by(Department) %>%
   summarise(Count = n(), .groups = "drop")
@@ -650,7 +584,6 @@ department_pie <- ggplot(department_counts, aes(x = "", y = Count, fill = Depart
   theme_minimal() +
   theme(axis.text.x = element_blank(), axis.ticks = element_blank(), panel.grid = element_blank())
 
-# Second Pie Chart: Amount of termination by Tal_category
 talent_type_counts <- talented_terminations %>%
   group_by(Tal_category) %>%
   summarise(Count = n(), .groups = "drop")
@@ -671,7 +604,6 @@ talent_type_pie <- ggplot(talent_type_counts, aes(x = "", y = Count, fill = as.f
   theme_minimal() +
   theme(axis.text.x = element_blank(), axis.ticks = element_blank(), panel.grid = element_blank())
 
-# Combine the two pie charts into one grid
 grid.arrange(department_pie, talent_type_pie, nrow = 2)
 
 ```
@@ -683,7 +615,7 @@ filtered_data <- data_turnover %>%
   filter(Termd != FALSE) %>%
   filter(Tal_category != 0)
 
-# Create the histogram
+# Histogram
 ggplot(filtered_data, aes(y = TermReason, fill = Department)) +
   geom_bar() + 
   facet_wrap(~ Tal_category, scales = "free_y") +
@@ -698,61 +630,36 @@ ggplot(filtered_data, aes(y = TermReason, fill = Department)) +
 
 set.seed(17)
 
-# Check the structure of the dataset
-str(data_turnover)
 
-# Ensure Tal_category and TermReason are factors
+str(data_turnover)
 data_turnover$Tal_category <- as.factor(data_turnover$Tal_category)
 data_turnover$TermReason <- as.factor(data_turnover$TermReason)
 
-
-# Subset relevant columns and filter for Tal_category == "Good Executors"
+# Subset
 data_SHAP <- data_turnover[data_turnover$Tal_category == "Good Executors", c("TermReason", "Engagement", "Career_Growth", "Financial_Compensation")]
 
-# Install and load necessary packages
-library(randomForest)
-
-# Remove empty levels from TermReason
+# SHAP and Random Forest
 data_SHAP$TermReason <- droplevels(data_SHAP$TermReason)
 
-# Verify the updated levels
 levels(data_SHAP$TermReason)
-
-
 table(data_SHAP$TermReason)
-
-# Train a Random Forest model to predict TermReason
 rf_model <- randomForest(TermReason ~ Engagement + Career_Growth + Financial_Compensation,
                          data = data_SHAP, 
                          ntree = 500, 
                          mtry = 3, 
                          importance = TRUE)
 
-# View the model summary
 print(rf_model)
 
-# Install and load the iml package
-library(iml)
-
-# Create a predictor object for the Random Forest model
 predictor <- Predictor$new(rf_model, data = data_SHAP[, -1], y = data_SHAP$TermReason)
-
-# Compute SHAP values for a single observation
 shapley <- Shapley$new(predictor, x.interest = data_SHAP[1, -1])
-
-# Visualize the SHAP values for this observation
 shapley$plot()
 
-# Feature importance based on SHAP values
 feature_imp <- FeatureImp$new(predictor, loss = "ce")  # "ce" = Cross-entropy loss
 plot(feature_imp)
 
-# Filter for a specific TermReason (e.g., "performance issue")
 subset_data <- data_SHAP[data_SHAP$TermReason == "performance issue", ]
 
-
-
-# Compute SHAP values for this subset
 shapley_values <- list()
 
 set.seed(13)
@@ -771,11 +678,10 @@ for (i in 1:nrow(data_turnover)) {
   }
 }
 
-# Combine all SHAP values into a data frame
+
 shap_combined <- do.call(rbind, shapley_values)
 
-library(ggplot2)
-
+# Plot
 ggplot(feature_imp$results, aes(x = reorder(feature, importance), y = importance)) +
   geom_bar(stat = "identity") +
   coord_flip() +
@@ -790,53 +696,32 @@ ggplot(feature_imp$results, aes(x = reorder(feature, importance), y = importance
 
 set.seed(13)
 
-# Check the structure of the dataset
 str(data_turnover)
-
-# Ensure Tal_category and TermReason are factors
 data_turnover$Tal_category <- as.factor(data_turnover$Tal_category)
 data_turnover$TermReason <- as.factor(data_turnover$TermReason)
 
-# Subset relevant columns and filter for Tal_category
+# Subset
 data_SHAP <- data_turnover[data_turnover$Tal_category == "Promising Employees", c("TermReason", "Engagement", "Career_Growth", "Financial_Compensation")]
 
-# Ensure there are no empty levels in TermReason after filtering
+# Shap and Random Forest
 data_SHAP$TermReason <- droplevels(data_SHAP$TermReason)
-
-# Verify levels of TermReason
 levels(data_SHAP$TermReason)
-
-# Show class distribution
 table(data_SHAP$TermReason)
 
-# Train a Random Forest model to predict TermReason
 library(randomForest)
 rf_model <- randomForest(TermReason ~ Engagement + Career_Growth + Financial_Compensation,
                          data = data_SHAP, 
                          ntree = 500, 
                          mtry = 3, 
                          importance = TRUE)
-
-# View the model summary
 print(rf_model)
 
-# Install and load the iml package
-library(iml)
-
-# Create a predictor object for the Random Forest model
 predictor <- Predictor$new(rf_model, data = data_SHAP[, -1], y = data_SHAP$TermReason)
-
-# Compute SHAP values for a single observation
 shapley <- Shapley$new(predictor, x.interest = data_SHAP[1, -1])
-
-# Visualize the SHAP values for this observation
 shapley$plot()
 
-# Feature importance based on SHAP values
 feature_imp <- FeatureImp$new(predictor, loss = "ce")  # "ce" = Cross-entropy loss
 plot(feature_imp)
-
-# Compute SHAP values for all rows in Tal_category 2
 shapley_values <- list()
 
 set.seed(14)
@@ -846,12 +731,9 @@ for (i in 1:nrow(data_SHAP)) {
   shapley_values[[i]] <- shapley$results
 }
 
-# Combine all SHAP values into a data frame
 shap_combined <- do.call(rbind, shapley_values)
 
-# Visualize SHAP feature importance
-library(ggplot2)
-
+# Plot
 ggplot(feature_imp$results, aes(x = reorder(feature, importance), y = importance)) +
   geom_bar(stat = "identity") +
   coord_flip() +
